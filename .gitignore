@@ -3,7 +3,7 @@ venv/
 .venv/
 env/
 
-# Environment variables (do not commit secrets)
+# Environment variables (don't commit secrets)
 .env
 .env.*
 !.env.example
