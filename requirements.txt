@@ -1,0 +1,25 @@
+# BPSS Screening Agent — Dependencies
+# Install with: pip install -r requirements.txt
+
+# ── LLM + Agent framework ─────────────────────────────────────────────────────
+langgraph
+langchain
+langchain-core
+langchain-huggingface
+huggingface_hub
+
+# ── PDF parsing ───────────────────────────────────────────────────────────────
+pypdf
+
+# ── DOCX parsing ─────────────────────────────────────────────────────────────
+python-docx
+
+# ── Excel / CSV parsing ───────────────────────────────────────────────────────
+openpyxl
+pandas
+
+# ── Environment variables ─────────────────────────────────────────────────────
+python-dotenv
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest
