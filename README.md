@@ -132,38 +132,7 @@ python -m pytest tests/ -v
 
 The system has four layers:
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Layer 1 · Ingestion                                │
-│  Parses 14 files (PDF, DOCX, XLSX, CSV) into an    │
-│  in-memory BPSSKnowledgeStore keyed by cand_id     │
-└────────────────────┬────────────────────────────────┘
-                     │ build_knowledge_store()
-┌────────────────────▼────────────────────────────────┐
-│  Layer 2 · Business Logic Tools                     │
-│  8 deterministic Python functions — zero LLM        │
-│  check_freshness, check_employment_coverage,        │
-│  check_rtw, check_criminality, check_adjudication,  │
-│  detect_contradictions, check_document_staleness,   │
-│  assess_closure_readiness                           │
-└────────────────────┬────────────────────────────────┘
-                     │ tool results (dicts with issues + citations)
-┌────────────────────▼────────────────────────────────┐
-│  Layer 3 · LangGraph Agent                          │
-│                                                     │
-│  question → planner → executor → synthesiser        │
-│                                                     │
-│  planner    : LLM decides which tools to call       │
-│  executor   : runs tools deterministically (no LLM) │
-│  synthesiser: LLM writes grounded cited answer      │
-└────────────────────┬────────────────────────────────┘
-                     │ final_answer (str)
-┌────────────────────▼────────────────────────────────┐
-│  Layer 4 · Output                                   │
-│  Plain text answer with citations to exact files,   │
-│  rows, and fields used as evidence                  │
-└─────────────────────────────────────────────────────┘
-```
+![BPSS Agent Architecture](architecture.svg)
 
 ### Key design decisions
 
