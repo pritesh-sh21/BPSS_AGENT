@@ -11,6 +11,13 @@ Policy: Screening_Operations_SOP.pdf
 Policy: BPSS_Screening_Policy_v3.pdf
   "Analyst notes, email statements, or verbal manager confirmation alone
    do not satisfy mandatory controls."
+
+1. If no adjudication entry → return ok (no exception, nothing to check here)
+2. Entry found → build citations
+3. Check if "provisional start" in decision/scope but "closure" not mentioned → issue
+4. Check if "no explicit waiver" in notes → issue
+5. For provisional starts → check dual approval (Hiring Director + Screening Ops Lead)
+
 """
 
 from __future__ import annotations

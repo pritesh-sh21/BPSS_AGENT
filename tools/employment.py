@@ -7,6 +7,15 @@ unexplained gaps longer than 31 days.
 Policy: BPSS_Screening_Policy_v3.pdf
   "Sufficient documentary or referee evidence to cover the previous 3 years;
    unexplained gaps over 31 days must be accounted for."
+
+1. Get candidate and review_date
+2. Calculate window_start = review_date - 3 years
+3. For each employment period:
+   a. If status is Weak/Gap/Unexplained → flag it
+4. Find the earliest valid period
+5. If earliest > window_start → gap at the start of window
+6. Return issues
+
 """
 
 from __future__ import annotations

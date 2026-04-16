@@ -6,6 +6,17 @@ of the analyst review date.
 
 Policy: BPSS_Screening_Policy_v3.pdf
   "Proof of address must be dated within 90 days of the analyst review date."
+
+1. Get the candidate record from store
+2. Get analyst_review_date from tracker
+3. Find all address-proof documents (bank statement, utility bill, etc.)
+4. For each document:
+   a. If not present in folder → issue (can't verify)
+   b. If no document date → issue (can't calculate age)
+   c. Calculate: review_date - document_date = age in days
+   d. If age > 90 → issue with exact day count
+5. Return passed=True if no issues, False otherwise
+  
 """
 
 from __future__ import annotations

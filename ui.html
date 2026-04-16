@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPSS Screening Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0d0f12;
+    --surface:   #151820;
+    --border:    #252a35;
+    --accent:    #4f9eff;
+    --accent2:   #00d4aa;
+    --danger:    #ff5c5c;
+    --warn:      #ffb340;
+    --success:   #34d399;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: 56px 1fr;
+  }
+
+  /* ── Header ── */
+  header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+
+  .logo span { color: var(--muted); }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+    margin-left: auto;
+  }
+
+  .status-dot.loading { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+  .status-dot.error   { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+
+  .status-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Sidebar ── */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px 0;
+  }
+
+  .sidebar-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    padding: 0 16px 12px;
+    text-transform: uppercase;
+  }
+
+  .candidate-card {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .candidate-card:hover { background: rgba(79,158,255,0.06); }
+  .candidate-card.active { background: rgba(79,158,255,0.1); border-left: 2px solid var(--accent); }
+
+  .cand-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 3px;
+  }
+
+  .cand-name { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+
+  .verdict-pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .pill-clear      { background: rgba(52,211,153,0.15); color: var(--success); }
+  .pill-wrong      { background: rgba(255,92,92,0.15);  color: var(--danger); }
+  .pill-notready   { background: rgba(255,179,64,0.15); color: var(--warn); }
+  .pill-risk       { background: rgba(79,158,255,0.15); color: var(--accent); }
+
+  /* ── Main ── */
+  main {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    overflow: hidden;
+  }
+
+  .content-area {
+    overflow-y: auto;
+    padding: 24px;
+  }
+
+  /* ── Ask panel ── */
+  .ask-bar {
+    padding: 16px 24px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .ask-bar textarea {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 10px 14px;
+    resize: none;
+    height: 44px;
+    transition: border-color 0.2s, height 0.2s;
+    outline: none;
+  }
+
+  .ask-bar textarea:focus {
+    border-color: var(--accent);
+    height: 88px;
+  }
+
+  .btn-ask {
+    background: var(--accent);
+    color: #0d0f12;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0 20px;
+    height: 44px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-ask:hover   { opacity: 0.85; }
+  .btn-ask:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Quick questions ── */
+  .quick-wrap {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .quick-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--sans);
+  }
+
+  .quick-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Chat messages ── */
+  .messages { display: flex; flex-direction: column; gap: 20px; }
+
+  .msg-user {
+    align-self: flex-end;
+    max-width: 70%;
+    background: rgba(79,158,255,0.12);
+    border: 1px solid rgba(79,158,255,0.2);
+    border-radius: 8px 8px 2px 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .msg-agent {
+    align-self: flex-start;
+    max-width: 85%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px 8px 8px 8px;
+    padding: 16px;
+    line-height: 1.7;
+  }
+
+  .msg-agent .agent-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .msg-agent .answer-text { white-space: pre-wrap; font-size: 13px; }
+
+  .msg-agent .meta {
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ── Candidate detail panel ── */
+  .detail-panel { display: none; }
+  .detail-panel.visible { display: block; }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .detail-id {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .detail-name { font-size: 20px; font-weight: 600; }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .control-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+
+  .control-name {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .control-status {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .status-complete  { color: var(--success); }
+  .status-incomplete { color: var(--danger); }
+  .status-exempt    { color: var(--muted); }
+
+  .issues-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+  }
+
+  .issues-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .issue-item {
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .issue-item:last-child { border-bottom: none; }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .thinking {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  /* ── Welcome ── */
+  .welcome {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .welcome h2 {
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .welcome p { font-size: 13px; line-height: 1.8; }
+
+  /* ── Section switcher ── */
+  .view-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .view-tab {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 8px 16px;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+
+  .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .view-tab:hover  { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">BPSS<span>/</span>AGENT</div>
+  <span class="status-label" id="status-label">connecting...</span>
+  <div class="status-dot loading" id="status-dot"></div>
+</header>
+
+<!-- Sidebar: candidate list -->
+<aside>
+  <div class="sidebar-title">Candidates</div>
+  <div id="candidate-list">
+    <div style="padding:16px;color:var(--muted);font-size:12px;">Loading...</div>
+  </div>
+</aside>
+
+<!-- Main area -->
+<main>
+  <div class="content-area" id="content-area">
+
+    <!-- Tab switcher -->
+    <div class="view-tabs">
+      <button class="view-tab active" onclick="showView('chat')">Agent Chat</button>
+      <button class="view-tab" onclick="showView('detail')">Candidate Detail</button>
+    </div>
+
+    <!-- Chat view -->
+    <div id="chat-view">
+      <div class="quick-wrap" id="quick-questions">
+        <button class="quick-btn" onclick="askQuick('Which candidates are not ready for closure?')">Not ready for closure?</button>
+        <button class="quick-btn" onclick="askQuick('Which cases have policy exceptions? Distinguish approved from unapproved.')">Policy exceptions?</button>
+        <button class="quick-btn" onclick="askQuick('Which candidates have stale or expired documents?')">Stale documents?</button>
+        <button class="quick-btn" onclick="askQuick('Draft an escalation summary for the top 3 highest-risk cases.')">Escalation summary</button>
+        <button class="quick-btn" onclick="askQuick('Reconcile contradictions between the tracker and analyst notes.')">Contradictions?</button>
+        <button class="quick-btn" onclick="askQuick('Create a structured JSON summary for each candidate.')">JSON summary</button>
+      </div>
+      <div class="messages" id="messages">
+        <div class="welcome">
+          <h2>BPSS Screening Agent</h2>
+          <p>Ask any question about the 6 candidates in the screening dataset.<br>
+             The agent retrieves evidence from PDFs, DOCX, CSV, and XLSX files<br>
+             and returns grounded answers with source citations.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Candidate detail view -->
+    <div id="detail-view" style="display:none;">
+      <div id="detail-content">
+        <div class="welcome">
+          <h2>Select a candidate</h2>
+          <p>Click any candidate in the sidebar to see full details.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Ask bar -->
+  <div class="ask-bar">
+    <textarea
+      id="question-input"
+      placeholder="Ask about screening status, policy compliance, missing evidence..."
+      onkeydown="handleKey(event)"
+    ></textarea>
+    <button class="btn-ask" id="ask-btn" onclick="submitQuestion()">Ask</button>
+  </div>
+</main>
+
+<script>
+const API = "http://localhost:8000"
+let currentView = "chat"
+let isAsking = false
+
+// ── Startup ───────────────────────────────────────────────────────────────
+
+async function init() {
+  await checkHealth()
+  await loadCandidates()
+}
+
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API}/health`)
+    const data = await r.json()
+    if (data.status === "ok" && data.store_loaded) {
+      document.getElementById("status-dot").className = "status-dot"
+      document.getElementById("status-label").textContent = `${data.candidates} candidates loaded`
+    } else {
+      setError("store not ready")
+    }
+  } catch {
+    setError("API offline")
+  }
+}
+
+function setError(msg) {
+  document.getElementById("status-dot").className = "status-dot error"
+  document.getElementById("status-label").textContent = msg
+}
+
+// ── Candidate sidebar ─────────────────────────────────────────────────────
+
+async function loadCandidates() {
+  try {
+    const r = await fetch(`${API}/candidates`)
+    const candidates = await r.json()
+    renderSidebar(candidates)
+  } catch (e) {
+    document.getElementById("candidate-list").innerHTML =
+      `<div style="padding:16px;color:var(--danger);font-size:12px;">Failed to load candidates</div>`
+  }
+}
+
+function verdictPill(verdict) {
+  if (verdict === "CLEAR")
+    return `<span class="verdict-pill pill-clear">CLEAR</span>`
+  if (verdict === "INCORRECTLY MARKED CLEAR")
+    return `<span class="verdict-pill pill-wrong">INCORRECT</span>`
+  if (verdict === "RISK ACCEPTED")
+    return `<span class="verdict-pill pill-risk">RISK ACCEPTED</span>`
+  return `<span class="verdict-pill pill-notready">NOT READY</span>`
+}
+
+function renderSidebar(candidates) {
+  const list = document.getElementById("candidate-list")
+  list.innerHTML = candidates.map(c => `
+    <div class="candidate-card" id="card-${c.candidate_id}"
+         onclick="selectCandidate('${c.candidate_id}')">
+      <div class="cand-id">${c.candidate_id}</div>
+      <div class="cand-name">${c.candidate_name}</div>
+      ${verdictPill(c.overall_verdict)}
+    </div>
+  `).join("")
+}
+
+// ── Candidate detail ──────────────────────────────────────────────────────
+
+async function selectCandidate(id) {
+  // highlight sidebar
+  document.querySelectorAll(".candidate-card").forEach(c => c.classList.remove("active"))
+  document.getElementById(`card-${id}`).classList.add("active")
+
+  showView("detail")
+
+  const detail = document.getElementById("detail-content")
+  detail.innerHTML = `<div style="padding:20px;color:var(--muted);font-family:var(--mono);font-size:12px;"><span class="spinner"></span>Loading ${id}...</div>`
+
+  try {
+    const r = await fetch(`${API}/candidate/${id}`)
+    const c = await r.json()
+    renderDetail(c)
+  } catch {
+    detail.innerHTML = `<div style="color:var(--danger);">Failed to load candidate ${id}</div>`
+  }
+}
+
+function controlStatusClass(status) {
+  if (status === "COMPLETE")   return "status-complete"
+  if (status === "INCOMPLETE") return "status-incomplete"
+  return "status-exempt"
+}
+
+function renderDetail(c) {
+  const adj = c.has_adjudication
+    ? `<span style="color:var(--accent2)">Yes — ${c.adjudication_decision}</span>`
+    : `<span style="color:var(--muted)">None</span>`
+
+  const issues = c.all_issues.length
+    ? c.all_issues.map(i => `<div class="issue-item">${i}</div>`).join("")
+    : `<div style="color:var(--success);font-size:12px;padding:8px 0;">No issues found</div>`
+
+  const controls = Object.entries(c.control_completion).map(([name, status]) => `
+    <div class="control-item">
+      <div class="control-name">${name}</div>
+      <div class="control-status ${controlStatusClass(status)}">${status}</div>
+    </div>
+  `).join("")
+
+  document.getElementById("detail-content").innerHTML = `
+    <div class="detail-header">
+      <div>
+        <div class="detail-id">${c.candidate_id} · ${c.role}</div>
+        <div class="detail-name">${c.candidate_name}</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        ${verdictPill(c.overall_verdict)}
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;">
+          Risk: ${c.risk_level} · ${c.issue_count} issue(s)
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;font-family:var(--mono);font-size:11px;color:var(--muted);">
+      Tracker status: <span style="color:var(--text)">${c.tracker_status}</span>
+      &nbsp;·&nbsp;
+      Adjudication: ${adj}
+    </div>
+
+    <div class="controls-grid">${controls}</div>
+
+    <div class="issues-list">
+      <div class="issues-title">Issues (${c.all_issues.length})</div>
+      ${issues}
+    </div>
+  `
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────
+
+function handleKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault()
+    submitQuestion()
+  }
+}
+
+function askQuick(q) {
+  document.getElementById("question-input").value = q
+  showView("chat")
+  submitQuestion()
+}
+
+async function submitQuestion() {
+  if (isAsking) return
+  const input = document.getElementById("question-input")
+  const question = input.value.trim()
+  if (!question) return
+
+  isAsking = true
+  input.value = ""
+  document.getElementById("ask-btn").disabled = true
+  showView("chat")
+
+  const messages = document.getElementById("messages")
+
+  // remove welcome message
+  const welcome = messages.querySelector(".welcome")
+  if (welcome) welcome.remove()
+
+  // user message
+  const userMsg = document.createElement("div")
+  userMsg.className = "msg-user"
+  userMsg.textContent = question
+  messages.appendChild(userMsg)
+
+  // thinking indicator
+  const thinking = document.createElement("div")
+  thinking.className = "thinking"
+  thinking.innerHTML = `<span class="spinner"></span>Agent is thinking...`
+  messages.appendChild(thinking)
+  messages.scrollTop = messages.scrollHeight
+
+  try {
+    const start = Date.now()
+    const r = await fetch(`${API}/ask`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({question})
+    })
+    const data = await r.json()
+
+    thinking.remove()
+
+    const answerText = data.answer || data.detail || "No answer returned."
+    const agentMsg = document.createElement("div")
+    agentMsg.className = "msg-agent"
+    agentMsg.innerHTML = `
+      <div class="agent-label">BPSS Agent</div>
+      <div class="answer-text">${escapeHtml(answerText)}</div>
+      <div class="meta">Answered in ${data.duration_s || "?"}s</div>
+    `
+    messages.appendChild(agentMsg)
+
+  } catch (e) {
+    thinking.remove()
+    const errMsg = document.createElement("div")
+    errMsg.className = "msg-agent"
+    errMsg.innerHTML = `<div style="color:var(--danger)">Error: ${e.message}</div>`
+    messages.appendChild(errMsg)
+  }
+
+  // scroll to bottom smoothly
+  messages.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "end" })
+  isAsking = false
+  document.getElementById("ask-btn").disabled = false
+}
+
+// ── View switching ────────────────────────────────────────────────────────
+
+function showView(view) {
+  currentView = view
+  document.getElementById("chat-view").style.display   = view === "chat"   ? "block" : "none"
+  document.getElementById("detail-view").style.display = view === "detail" ? "block" : "none"
+  document.querySelectorAll(".view-tab").forEach((t, i) => {
+    t.classList.toggle("active", (i === 0 && view === "chat") || (i === 1 && view === "detail"))
+  })
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+init()
+</script>
+</body>
+</html>

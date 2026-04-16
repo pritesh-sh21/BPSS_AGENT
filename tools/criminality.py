@@ -6,6 +6,12 @@ Verifies whether the criminality / basic disclosure check is complete.
 Policy: BPSS_Screening_Policy_v3.pdf
   "Criminality/basic disclosure: required for all standard hires unless
    the role code is INTERN or CONTRACTOR-LTD."
+
+1. If role is INTERN or CONTRACTOR-LTD → return passed=True (exempt)
+2. Look for disclosure/DBS documents in inventory
+3. If no docs found AND tracker says incomplete → issue
+4. Check adjudication register — if scope mentions "before DBS" → confirms pending
+
 """
 
 from __future__ import annotations

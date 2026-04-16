@@ -8,6 +8,19 @@ Staleness rules (BPSS_Screening_Policy_v3.pdf):
   - Expired BRP alone is not acceptable RTW evidence
   - Expired passport is only acceptable for identity corroboration
     if supported by a second current photo ID
+
+1. For each document:
+   a. If valid_to < review_date → document expired before review
+      - BRP: always HIGH severity
+      - Passport: check if backup photo ID exists → LOW if yes, HIGH if no
+   b. If address proof > 90 days old → HIGH severity
+   c. If not present in folder → HIGH severity
+2. If no address proof document at all → HIGH severity
+3. Return flagged_documents list with severity labels
+
+Note: check_freshness only looks at address proof. check_document_staleness looks at ALL documents and classifies severity. It's what the planner calls when the question is specifically about expired/stale evidence.
+
+
 """
 
 from __future__ import annotations

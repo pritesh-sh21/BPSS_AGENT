@@ -9,6 +9,16 @@ Detects:
   2. Individual control flags (identity/rtw/employment) vs live evidence
   3. ready_to_join=True with non-Clear status (Ready to Join ≠ BPSS closure)
   4. Verbal/email approval relied upon as evidence
+
+1. Run live checks (freshness, employment, rtw) — NOT pre-computed values
+2. Contradiction A: tracker='Clear' but live checks found issues
+3. Contradiction B: tracker marks a control complete but live check failed
+4. Contradiction C: ready_to_join=True with open issues
+5. Contradiction D: verbal/email approval detected in text sources
+
+Why re-run tools instead of reading ControlStatus?
+Pre-computed ControlStatus is set during ingestion and might use slightly different logic. By re-running the actual tools, we guarantee contradictions are measured against exactly the same rules as assess_closure_readiness. No risk of divergence
+
 """
 
 from __future__ import annotations

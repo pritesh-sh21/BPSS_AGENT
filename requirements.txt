@@ -21,5 +21,10 @@ pandas
 # ── Environment variables ─────────────────────────────────────────────────────
 python-dotenv
 
+# ── API + Backend ─────────────────────────────────────────────────────────────
+fastapi
+uvicorn[standard]
+python-multipart
+
 # ── Testing ───────────────────────────────────────────────────────────────────
 pytest

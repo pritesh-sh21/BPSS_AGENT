@@ -8,6 +8,15 @@ assess_closure_readiness(store, cand_id)
 
 get_all_candidates_summary(store)
     Runs assess for every candidate → ranked summary (highest risk first).
+
+1. Run all checks: freshness, employment, rtw, criminality, adjudication, contradictions
+2. Collect all_issues and all_citations from every check
+3. Determine verdict:
+   - No issues → CLEAR
+   - Has approved exception AND status=Risk Accepted → RISK ACCEPTED
+   - Tracker=Clear BUT has issues → INCORRECTLY MARKED CLEAR
+   - Anything else → NOT READY FOR CLOSURE
+   
 """
 
 from __future__ import annotations

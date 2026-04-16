@@ -7,7 +7,7 @@ Three nodes form the agent pipeline:
   executor_node    — runs the chosen tools deterministically (no LLM)
   synthesiser_node — LLM turns tool results into a grounded cited answer
 
-LLM: Mistral-7B-Instruct via HuggingFaceEndpoint
+LLM: meta-llama/Llama-3.1-8B-Instruct via HuggingFaceEndpoint
 """
 
 from __future__ import annotations

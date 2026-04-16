@@ -9,6 +9,17 @@ Rules (reference/Permitted_RTW_Evidence_Matrix.pdf):
   - Expired BRP alone: NOT acceptable.
   - Contractors personally working in UK still require RTW evidence
     unless legal counsel documented a jurisdictional exemption.
+
+1. Find all RTW-type documents (passport, BRP, eVisa, share code)
+   — exclude student ID (identity only, not RTW)
+2. For each document:
+   a. If BRP and expired → issue (RTW matrix: expired BRP not acceptable)
+   b. If passport and expired → check if pack text mentions share code/eVisa
+      - If yes → acceptable, add citation
+      - If no  → issue (no valid RTW)
+   c. If document not in folder → issue
+3. For CONTRACTOR-LTD role → special check:
+   - If analyst notes say "policy does not state this" → recruiter assumption invalid
 """
 
 from __future__ import annotations
