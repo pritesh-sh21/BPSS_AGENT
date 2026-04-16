@@ -465,7 +465,12 @@
 </main>
 
 <script>
-const API = "http://localhost:8000"
+// Auto-detect API URL
+// If served from FastAPI (production) → same origin
+// If opened as local file → use localhost
+const API = window.location.hostname === ""
+  ? "http://localhost:8000"          // opened as file locally
+  : window.location.origin           // served from FastAPI on any host
 let currentView = "chat"
 let isAsking = false
 

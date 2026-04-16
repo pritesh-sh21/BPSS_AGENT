@@ -21,6 +21,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 load_dotenv(Path(__file__).parent / ".env")
@@ -40,7 +42,9 @@ from tools import assess_closure_readiness, get_all_candidates_summary
 
 # ── Global knowledge store ─────────────────────────────────────────────────
 
-DATA_DIR = Path(__file__).parent / "bpss_agentic_dataset"
+# Works both locally and on Railway/cloud
+# Can override with DATA_DIR env variable
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(Path(__file__).parent / "bpss_agentic_dataset")))
 store = None
 
 
@@ -123,6 +127,15 @@ class HealthResponse(BaseModel):
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────
+
+@app.get("/", include_in_schema=False)
+async def serve_ui():
+    """Serve the UI from the root URL."""
+    ui_path = Path(__file__).parent / "ui.html"
+    if ui_path.exists():
+        return FileResponse(str(ui_path))
+    return {"message": "UI not found. Place ui.html in the project root."}
+
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 async def health():
